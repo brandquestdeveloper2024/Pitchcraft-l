@@ -1,0 +1,35 @@
+name = "pitchcraft-demo"
+type = "javascript"
+account_id = "" # Add your Cloudflare account ID here
+workers_dev = true
+
+[env.production]
+name = "pitchcraft-demo-prod"
+
+# Build configuration
+[build]
+command = ""
+cwd = "."
+watch_paths = ["index.html", "styles.css", "main.js"]
+
+# Triggers for caching
+[triggers]
+crons = ["0 0 * * *"]  # Daily cache refresh
+
+# Environment variables (optional)
+[env.production.vars]
+GITHUB_REPO = "brandquestdeveloper2024/Pitchcraft-l"
+GITHUB_BRANCH = "main"
+
+# Minify on deploy
+[build.upload]
+format = "modules"
+main = "worker.js"
+
+[build.upload.rules]
+- type = "CompiledContentType"
+  globs = ["**/*.js"]
+  fallthrough = true
+- type = "Text"
+  globs = ["**/*.txt"]
+  fallthrough = true
