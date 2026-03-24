@@ -23,7 +23,7 @@ Unique Demo Sessions<!DOCTYPE html>
       <span class="nav-link" onclick="scrollToEl('section-how')">How It Works</span>
       <span class="nav-link" onclick="scrollToEl('section-testi')">Reviews</span>
       <span class="nav-link" onclick="scrollToEl('section-pricing')">Pricing</span>
-      <button class="nav-cta" onclick="showDemo()" style="background:var(--tx);color:#fff;border-color:var(--tx);display:inline-flex;align-items:center;gap:6px">🔒 Demo</button>
+      <button class="nav-cta" onclick="showDemo()" style="background:var(--tx);color:#fff;border-color:var(--tx);display:inline-flex;align-items:center;gap:6px">✨ Demo</button>
       <button class="nav-cta" onclick="showLogin()">Sign In →</button>
     </div>
   </nav>
@@ -1475,12 +1475,6 @@ function startNewClientDemo(){
 
 /* ══ DASHBOARD ══ */
 function showDashboard(){
-  // Check if user is logged in
-  if(!isUserLoggedIn()){
-    showLogin();
-    return;
-  }
-  
   const ov = document.getElementById('redirect-overlay');
   if(ov) ov.remove();
   ['page-home','page-login','page-trial'].forEach(id=>document.getElementById(id).classList.remove('active'));
