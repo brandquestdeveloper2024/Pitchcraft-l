@@ -1,4 +1,6 @@
-name = "pitchcraft"
+# Cloudflare Pages Configuration
+# This is for static site deployment via Cloudflare Pages
+# No build command needed - we have static assets ready
+
+name = "pitchcraft-l"
 type = "javascript"
-route = "*"
-zone_name = ""
