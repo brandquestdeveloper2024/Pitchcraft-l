@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Unique Demo Sessions<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -520,7 +520,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--bg);-webkit-
         <button class="btn-primary" onclick="selectPlan('trial')">Start Free Trial ✦</button>
         <button class="btn-secondary" onclick="showDemo()" style="display:inline-flex;align-items:center;gap:7px;border-color:var(--tx);color:var(--tx);font-weight:700">▶ Live Demo <span style="font-size:9.5px;background:var(--accent);color:#fff;border-radius:20px;padding:1px 7px;font-weight:700">5 Free</span></button>
       </div>
-      <div style="font-size:11px;color:var(--mu);text-align:center;margin-top:-38px;margin-bottom:40px;animation:fadeUp .7s .28s ease both">✦ No sign-up needed for demo &nbsp;·&nbsp; 5 free proposal generations included</div>
+      <div style="font-size:11px;color:var(--mu);text-align:center;margin-top:-38px;margin-bottom:40px;animation:fadeUp .7s .28s ease both">✦ Demo login required &nbsp;·&nbsp; Use demo1-demo50 / demo123 &nbsp;·&nbsp; 5 free proposal generations per client</div>
       <div class="hero-stats" style="animation:fadeUp .7s .32s ease both">
         <div class="hero-stat"><div class="hero-stat-num" data-target="1200" data-suffix="+">0</div><div class="hero-stat-label">Agencies</div></div>
         <div class="hero-stat"><div class="hero-stat-num" data-target="19" data-suffix="">0</div><div class="hero-stat-label">Templates</div></div>
@@ -1109,8 +1109,8 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--bg);-webkit-
         <!-- DEMO CREDENTIALS HINT -->
         <div class="demo-creds" onclick="fillDemoCredentials()">
           <div class="demo-creds-label">🎬 Demo Credentials — click to autofill</div>
-          <div class="demo-creds-row"><span class="demo-creds-key">Email</span><span class="demo-creds-val"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0367666e6c43736a77606b60716265772d6a6c">[email&#160;protected]</a></span></div>
-          <div class="demo-creds-row"><span class="demo-creds-key">Password</span><span class="demo-creds-val">demo1234</span></div>
+          <div class="demo-creds-row"><span class="demo-creds-key">Username</span><span class="demo-creds-val">demo1 (or demo2-demo50)</span></div>
+          <div class="demo-creds-row"><span class="demo-creds-key">Password</span><span class="demo-creds-val">demo123</span></div>
         </div>
 
         <div class="lf-err" id="si-err"></div>
@@ -1517,9 +1517,9 @@ function activateNewAccount(){
   if(modal) modal.style.display = 'none';
   const user = _pendingUser || {};
   const plan = _pendingPlan || 'starter';
-  try{ sessionStorage.setItem('pc_user', JSON.stringify({
+  try{ setSessionData('pc_user', {
     name: user.name, email: user.email, provider: 'Email', agency: user.agency, plan
-  })); }catch(e){}
+  }); }catch(e){}
   // Apply the chosen plan
   completeActivation(plan);
   _pendingUser = null;
@@ -1545,13 +1545,12 @@ function clearMsg(){
 /* ══ SIGN IN ══ */
 const DEMO_EMAIL = 'demo@pitchcraft.io';
 let _pendingUser = null; // Stores new user details until payment complete
-const DEMO_PASS  = 'demo1234';
 
 function fillDemoCredentials(){
   const emailEl = document.getElementById('si-email');
   const passEl  = document.getElementById('si-pass');
-  emailEl.value = DEMO_EMAIL;
-  passEl.value  = DEMO_PASS;
+  emailEl.value = 'demo1';
+  passEl.value  = 'demo123';
   // Animate fields to show they've been filled
   [emailEl, passEl].forEach(el => {
     el.style.borderColor = 'var(--accent)';
@@ -1562,25 +1561,31 @@ function fillDemoCredentials(){
 
 function doSignIn(){
   clearMsg();
-  const email = document.getElementById('si-email').value.trim();
+  const username = document.getElementById('si-email').value.trim();
   const pass  = document.getElementById('si-pass').value;
   const err   = document.getElementById('si-err');
   const btn   = document.getElementById('si-btn');
-  if(!email){err.textContent='Please enter your email address.';err.style.display='block';return;}
-  if(!email.includes('@')){err.textContent='Please enter a valid email address.';err.style.display='block';return;}
+  if(!username){err.textContent='Please enter your username (demo1-demo50).';err.style.display='block';return;}
   if(!pass){err.textContent='Please enter your password.';err.style.display='block';return;}
-  // Wrong credentials check (demo mode)
-  if(email !== DEMO_EMAIL || pass !== DEMO_PASS){
-    err.textContent='Incorrect credentials. Use the demo credentials above or try again.';
+  
+  // Validate against demo accounts
+  if(!validateLoginCredentials(username, pass)){
+    err.textContent='Invalid credentials. Use demo1-demo50 with password demo123';
     err.style.display='block';
     document.getElementById('si-pass').value='';
     return;
   }
+  
   btn.disabled=true;
   btn.innerHTML='<span class="lf-spin"></span> Signing in…';
   setTimeout(()=>{
-    showRedirectOverlay('Welcome back! Loading your dashboard…');
-    setTimeout(()=>showDashboard(),900);
+    setUserLoggedIn(username);
+    showRedirectOverlay('Welcome! Loading your dashboard…');
+    setTimeout(()=>{
+      btn.disabled=false;
+      btn.innerHTML='Sign In ✦';
+      showDashboard();
+    },900);
   },1400);
 }
 
@@ -1754,8 +1759,8 @@ function finishAuth(name, email, provider){
 
   setTimeout(()=>{
     overlay.remove();
-    // Store user info in sessionStorage so demo can read it
-    sessionStorage.setItem('pc_user', JSON.stringify({name, email, provider}));
+    // Store user info in sessionStorage so demo can read it (session-scoped)
+    setSessionData('pc_user', {name, email, provider});
     showRedirectOverlay('Signed in! Loading your dashboard…');
     setTimeout(()=>showDashboard(),700);
   }, 1600);
@@ -1837,13 +1842,123 @@ function checkStr2(val){
   text.textContent=lv.t;text.style.color=lv.c;
 }
 
+/* ══ DEMO AUTHENTICATION ══ */
+const DEMO_ACCOUNTS = Array.from({length: 50}, (_, i) => ({
+  username: `demo${i+1}`,
+  password: 'demo123'
+}));
+
+function validateLoginCredentials(username, password){
+  return DEMO_ACCOUNTS.some(acc => acc.username === username && acc.password === password);
+}
+
+function isUserLoggedIn(){
+  try{
+    const loginState = sessionStorage.getItem('pc_logged_in');
+    return loginState === 'true';
+  }catch(e){ return false; }
+}
+
+function setUserLoggedIn(username){
+  try{
+    sessionStorage.setItem('pc_logged_in', 'true');
+    sessionStorage.setItem('pc_login_user', username);
+  }catch(e){}
+}
+
+function getCurrentLoginUser(){
+  try{
+    return sessionStorage.getItem('pc_login_user') || 'Demo User';
+  }catch(e){ return 'Demo User'; }
+}
+
+function doLogoutUser(){
+  try{
+    sessionStorage.removeItem('pc_logged_in');
+    sessionStorage.removeItem('pc_login_user');
+    clearCurrentSession();
+  }catch(e){}
+}
+
+/* ══ DEMO SESSION MANAGEMENT ══
+ * Each client demo gets a unique session ID, isolating all demo data
+ * Session data is namespaced by session ID: "sessionId:key"
+ * When a new client arrives, click "👤 New Client" in the topbar to:
+ *   1. Generate a fresh session ID
+ *   2. Clear all previous client's data
+ *   3. Reset dashboard to pristine state
+ * Benefits:
+ *   - No data leakage between clients
+ *   - Easy client handoff (just click button)
+ *   - Session persists until logout or new client clicked
+ *   - Ideal for in-person sales demos or client presentations
+ */
+function generateDemoSessionId(){
+  return 'demo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+function getCurrentDemoSession(){
+  try{
+    let sessionId = sessionStorage.getItem('pc_demo_session');
+    if(!sessionId){
+      sessionId = generateDemoSessionId();
+      sessionStorage.setItem('pc_demo_session', sessionId);
+    }
+    return sessionId;
+  }catch(e){ return 'demo_default'; }
+}
+
+function getSessionStorageKey(key){
+  const sessionId = getCurrentDemoSession();
+  return `${sessionId}:${key}`;
+}
+
+function setSessionData(key, value){
+  try{ sessionStorage.setItem(getSessionStorageKey(key), JSON.stringify(value)); }catch(e){}
+}
+
+function getSessionData(key){
+  try{ return JSON.parse(sessionStorage.getItem(getSessionStorageKey(key)) || 'null'); }catch(e){ return null; }
+}
+
+function clearCurrentSession(){
+  try{
+    const sessionId = sessionStorage.getItem('pc_demo_session');
+    const keys = [];
+    for(let i=0; i<sessionStorage.length; i++){
+      const k = sessionStorage.key(i);
+      if(k && k.startsWith(sessionId+':')) keys.push(k);
+    }
+    keys.forEach(k=>sessionStorage.removeItem(k));
+  }catch(e){}
+}
+
+function startNewClientDemo(){
+  clearCurrentSession();
+  sessionStorage.removeItem('pc_demo_session');
+  const newSessionId = generateDemoSessionId();
+  sessionStorage.setItem('pc_demo_session', newSessionId);
+  showRedirectOverlay('Starting fresh demo for new client…');
+  setTimeout(()=>{
+    showDashboard();
+    showToast('✓ Demo reset for new client — start generating proposals!');
+  }, 600);
+}
+
 /* ══ DASHBOARD ══ */
 function showDashboard(){
+  // Check if user is logged in
+  if(!isUserLoggedIn()){
+    showLogin();
+    return;
+  }
+  
   const ov = document.getElementById('redirect-overlay');
   if(ov) ov.remove();
   ['page-home','page-login','page-trial'].forEach(id=>document.getElementById(id).classList.remove('active'));
   document.getElementById('page-dashboard').classList.add('active');
   window.scrollTo(0,0);
+  getCurrentDemoSession(); // Initialize session if not exists
   if(typeof window._dbInit==='function') window._dbInit();
 }
 
@@ -2343,6 +2458,7 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--bg);-webkit-
   <div class="topbar">
     <div class="topbar-title" id="page-title">Templates</div>
     <div style="display:flex;gap:8px">
+      <button class="btn btn-o btn-sm" onclick="startNewClientDemo()" title="Reset demo for a new client" style="background:rgba(192,64,26,.1);border-color:#f5c4b4;color:#c0401a">👤 New Client</button>
       <button class="btn btn-o btn-sm" onclick="nav('agency')">⚙ Agency</button>
       <button class="btn btn-g btn-sm" onclick="nav('generate')">+ New Proposal</button>
     </div>
@@ -2353,7 +2469,10 @@ body{font-family:'Syne',sans-serif;color:var(--tx);background:var(--bg);-webkit-
     <div id="view-templates">
       <div class="demo-banner">
         <span>🎬 <b>Live Demo</b> — 19 templates · <b style="color:var(--grn)">5 free proposal generations</b> · Click any card to preview · "Load Template →" auto-fills the form · then hit Generate</span>
-        <button class="btn btn-o btn-xs" onclick="resetDemo()">↺ Reset</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-o btn-xs" onclick="resetDemo()">↺ Reset</button>
+          <button class="btn btn-o btn-xs" onclick="startNewClientDemo()" title="Start a new isolated client demo" style="font-size:9.5px;background:rgba(26,128,74,.08);border-color:#a8dcc0;color:var(--grn)">👤 New Client</button>
+        </div>
       </div>
       <div class="pg-header">
         <div><h2>Templates</h2><p>Save briefs as reusable templates. One click loads everything into the proposal form.</p></div>
@@ -2735,9 +2854,9 @@ let SAVED=[
 let _tab='presets',_cat='all',_q='',_prevTmpl=null,_loaded=null;
 
 function initDashboard(){
-  // Read signed-in user from OAuth flow
+  // Read signed-in user from OAuth flow (session-scoped)
   try {
-    const u = JSON.parse(sessionStorage.getItem('pc_user') || 'null');
+    const u = getSessionData('pc_user') || JSON.parse(sessionStorage.getItem('pc_user') || 'null');
     if(u && u.name){
       const nameEl = document.querySelector('.sb-uname');
       const planEl = document.querySelector('.sb-plan');
@@ -2801,9 +2920,16 @@ function buildSaved(){
 function buildCard(t,isPreset,idx){
   const chips=t.services.slice(0,3).map(s=>`<span class="c-chip">${s}</span>`).join('')+(t.services.length>3?`<span class="c-chip">+${t.services.length-3}</span>`:'');
   const del=isPreset?'':` <button class="c-del" onclick="event.stopPropagation();delSaved(${idx})">✕</button>`;
+  
+  // Add usage counter for featured templates
+  const isFeatured = FEATURED_TEMPLATES.includes(t.name);
+  const usageCount = isFeatured ? getTemplateUsageCount(t.name) : 0;
+  const usageBadge = isFeatured ? `<div style="position:absolute;bottom:9px;right:9px;font-size:9px;font-weight:700;color:${usageCount >= FEATURED_LIMIT ? 'var(--rust)' : 'var(--grn)'};background:${usageCount >= FEATURED_LIMIT ? '#fef2ee' : 'var(--grn-bg)'};border:1px solid ${usageCount >= FEATURED_LIMIT ? '#f5c4b4' : '#a8dcc0'};border-radius:20px;padding:2px 8px;letter-spacing:.5px}">${usageCount}/${FEATURED_LIMIT}</div>` : '';
+  
   return `<div class="card${isPreset?' preset':''}" onclick="openPrev(${esc(t)})">
     ${del}
     ${isPreset?`<span class="c-badge">PRESET</span>`:''}
+    ${usageBadge}
     <span class="c-icon">${t.icon||'◻'}</span>
     <div class="c-name">${t.name}</div>
     <div class="c-ind">${t.industry}</div>
@@ -2901,12 +3027,44 @@ function updateSidePanel(t){
     <button class="side-gen-btn" onclick="generateProposal()">✦ Generate Now</button>`;
 }
 
+/* ══ FEATURED TEMPLATE LIMITS ══ */
+const FEATURED_TEMPLATES = ['Real Estate Lead Gen', 'D2C Performance', 'Healthcare Patient Acq.'];
+const FEATURED_LIMIT = 5;
+
+function trackTemplateUsage(templateName){
+  const key = getSessionStorageKey('template_usage');
+  let usage = {};
+  try{ usage = JSON.parse(sessionStorage.getItem(key) || '{}'); }catch(e){}
+  usage[templateName] = (usage[templateName] || 0) + 1;
+  try{ sessionStorage.setItem(key, JSON.stringify(usage)); }catch(e){}
+  return usage[templateName];
+}
+
+function getTemplateUsageCount(templateName){
+  const key = getSessionStorageKey('template_usage');
+  try{ 
+    const usage = JSON.parse(sessionStorage.getItem(key) || '{}');
+    return usage[templateName] || 0;
+  }catch(e){ return 0; }
+}
+
+function isFeatureLimitExceeded(templateName){
+  return FEATURED_TEMPLATES.includes(templateName) && getTemplateUsageCount(templateName) >= FEATURED_LIMIT;
+}
+
 function generateProposal(){
-  if(!useCredit()) return;
   const t=_loaded;
   const err=document.getElementById('gen-err');
   if(!t){err.textContent='Please load a template first.';err.style.display='block';return;}
   err.style.display='none';
+  
+  // Check if featured template limit exceeded
+  if(isFeatureLimitExceeded(t.name)){
+    showUpgradePromptForLimit(t.name);
+    return;
+  }
+  
+  if(!useCredit()) return;
   const btn=document.getElementById('gen-btn');
   btn.disabled=true; btn.innerHTML='<span class="spin"></span> Generating…';
   const out=document.getElementById('prop-output');
@@ -2926,12 +3084,37 @@ function generateProposal(){
   setTimeout(()=>{
     document.getElementById('st-'+(steps.length-1))?.classList.replace('active','done');
     btn.disabled=false; btn.innerHTML='✦ Generate Proposal';
+    // Track featured template usage
+    trackTemplateUsage(_loaded.name);
     renderProp(t);
     dbToast('✓ Proposal ready!','success');
   },steps.length*420+300);
 }
 
 function gv(id){ const el=document.getElementById(id); return el?(el.value||el.textContent||'').trim():''; }
+
+function showUpgradePromptForLimit(templateName){
+  const count = getTemplateUsageCount(templateName);
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn .25s ease';
+  modal.innerHTML = `
+    <div style="background:var(--s1);border:1.5px solid var(--gold-bdr);border-radius:12px;padding:28px;width:100%;max-width:450px;box-shadow:var(--sh-lg);animation:fadeUp .3s ease;text-align:center">
+      <div style="font-size:40px;margin-bottom:12px">✦</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--tx);margin-bottom:8px">${templateName}</div>
+      <div style="font-size:12px;color:var(--t3);line-height:1.7;margin-bottom:20px">
+        <span style="color:var(--rust);font-weight:700">${count} of ${FEATURED_LIMIT} free generations used</span><br>You've unlocked the power of this template! Ready to scale?
+      </div>
+      <div style="background:var(--gold-bg);border:1.5px solid var(--gold-bdr);border-radius:8px;padding:14px;margin-bottom:20px;font-size:12px;color:var(--accent);font-weight:600">
+        Unlock unlimited access to all templates + advanced features
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="this.closest('div').remove()" style="flex:1;padding:10px;background:transparent;border:1.5px solid var(--b2);color:var(--t2);border-radius:var(--r);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--b2)';this.style.color='var(--t2)'">Not now</button>
+        <button onclick="selectPlan('growth');this.closest('div').remove()" style="flex:1;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 4px 12px rgba(184,135,42,.25)" onmouseover="this.style.background='#a07020';this.style.transform='translateY(-1px)'" onmouseout="this.style.background='var(--accent)';this.style.transform='none'">Upgrade Now →</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
+}
 
 function buildAuditSection(){
   const channels=[
@@ -3053,10 +3236,14 @@ function confirmLogout(){
 function doLogout(){
   const modal = document.getElementById('logout-modal');
   if(modal) modal.remove();
-  try{ sessionStorage.removeItem('pc_user'); }catch(e){}
+  try{ 
+    sessionStorage.removeItem('pc_user');
+    doLogoutUser();
+  }catch(e){}
   document.getElementById('page-dashboard').classList.remove('active');
   document.getElementById('page-home').classList.add('active');
   window.scrollTo(0,0);
+  showToast('✓ Logged out successfully');
 }
 
 function nav(view){
